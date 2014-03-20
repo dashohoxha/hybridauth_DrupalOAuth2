@@ -1,0 +1,80 @@
+<?php
+/**
+ * @file
+ * Main file for the HybridAuth DrupalOAuth2 module.
+ */
+
+/**
+ * Implements hook_form_FORM_ID_alter() for hybridauth_admin_provider_settings.
+ */
+function hybridauth_DrupalOAuth2_form_hybridauth_admin_provider_settings_alter(&$form, &$form_state, $form_id) {
+  $provider_id = $form_state['build_info']['args'][0];
+  if ($provider_id != 'DrupalOAuth2')  return;
+
+  $app_settings = &$form['vtabs']['application'];
+
+  $help = t('
+          <p>Enter the <strong>OAuth2 Server</strong>, <strong>Client ID</strong> and <strong>Client Secret</strong>.<br/>
+          On the server you must set the <strong>Redirect URI</strong> of the client to:<br/>
+          <strong>%redirect_uri</strong></p>
+        ',
+          array(
+            '%redirect_uri' => url('hybridauth/endpoint', array(
+                           'absolute' => TRUE,
+                           'query' => array('hauth.done' => 'DrupalOAuth2'),
+                         )),
+          )
+  );
+
+  $app_settings['#description'] = $help;
+
+  unset($app_settings['hybridauth_provider_DrupalOAuth2_keys_key']);
+  unset($app_settings['hybridauth_provider_DrupalOAuth2_keys_id']['#description']);
+  unset($app_settings['hybridauth_provider_DrupalOAuth2_keys_secret']['#description']);
+  $app_settings['hybridauth_provider_DrupalOAuth2_keys_id']['#title'] = t('Client ID');
+  $app_settings['hybridauth_provider_DrupalOAuth2_keys_secret']['#title'] = t('Client Secret');
+
+  $app_settings  = array(
+    'hybridauth_provider_DrupalOAuth2_oauth2_server' => array(
+      '#type' => 'textfield',
+      '#title' => t('OAuth2 Server'),
+      '#default_value' => variable_get('hybridauth_provider_DrupalOAuth2_oauth2_server', 'https://server.example.org'),
+    ),
+  )
+    + $app_settings;
+
+  $app_settings['testing'] = array(
+    '#type'  => 'fieldset',
+    '#title' => t('Settings Useful for Development, Testing and Debug'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+ );
+
+  $app_settings['testing']['hybridauth_provider_DrupalOAuth2_skipssl'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Skip SSL'),
+    '#description' => t('Skip checking the SSL certificates.'),
+    '#default_value' => variable_get('hybridauth_provider_DrupalOAuth2_skipssl', FALSE),
+  );
+
+  $app_settings['testing']['hybridauth_provider_DrupalOAuth2_proxy'] = array(
+    '#type' => 'textfield',
+    '#title' => t('HTTP Proxy'),
+    '#description' => t('An HTTP proxy (like http://mitmproxy.org/) can be very useful for debug.'),
+    '#default_value' => variable_get('hybridauth_provider_DrupalOAuth2_proxy', ''),
+  );
+}
+
+/**
+ * Implements hook_hybridauth_provider_config_alter().
+ */
+function hybridauth_DrupalOAuth2_hybridauth_provider_config_alter(&$config, $provider_id) {
+  if ($provider_id != 'DrupalOAuth2')  return;
+
+  $client_id = variable_get('hybridauth_provider_DrupalOAuth2_keys_id', NULL);
+  variable_set('hybridauth_provider_DrupalOAuth2_keys_key', $client_id);
+
+  $config['oauth2_server'] = variable_get('hybridauth_provider_DrupalOAuth2_oauth2_server', 'https://server.example.org');
+  $config['skip_ssl'] = variable_get('hybridauth_provider_DrupalOAuth2_skipssl', FALSE);
+  $config['http_proxy'] = variable_get('hybridauth_provider_DrupalOAuth2_proxy', NULL);
+}

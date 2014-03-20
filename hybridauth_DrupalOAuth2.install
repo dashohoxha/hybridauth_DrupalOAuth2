@@ -1,0 +1,14 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the HybridAuth DrupalOAuth2 module.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function hybridauth_DrupalOAuth2_uninstall() {
+  variable_del('hybridauth_provider_DrupalOAuth2_oauth2_server');
+  variable_del('hybridauth_provider_DrupalOAuth2_skipssl');
+  variable_del('hybridauth_provider_DrupalOAuth2_proxy');
+}
